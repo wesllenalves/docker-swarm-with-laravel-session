@@ -1,0 +1,51 @@
+version: '3.7'
+services: 
+  example-app:
+    image: 'example-app'
+    deploy:
+      replicas: 4
+      placement:
+        constraints: [ node.role == worker ]
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "8282:80"
+    networks:
+      - laravel
+    depends_on:
+      - postgres
+    restart: always
+    volumes:
+      - .:/var/www/html:rw
+      - session-laravel-vol:/var/www/html/storage/framework/sessions
+  
+  postgres:
+    image: postgres:14.4-alpine
+    deploy:
+      replicas: 4
+      placement:
+        constraints: [ node.role == worker ]
+    container_name: "${CONTAINER_PREFIX}_postgres"
+    restart: always
+    ports:
+        - "${DB_PORT}:5432"
+    volumes:
+        - ./postgresql:/var/lib/postgresql/data
+    environment:
+        - POSTGRES_DB=${DB_DATABASE}
+        - POSTGRES_USER=${DB_USERNAME}
+        - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+        - laravel
+  
+volumes:
+  session-laravel-vol:
+    driver: local
+    driver_opts:
+      type: overlay
+      encrypted: "false"
+
+networks: 
+  laravel:    
+    driver: overlay
