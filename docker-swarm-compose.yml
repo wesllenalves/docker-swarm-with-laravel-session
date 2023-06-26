@@ -1,43 +1,37 @@
 version: '3.7'
-services: 
+services:
   example-app:
-    image: 'example-app'
-    deploy:
-      replicas: 4
-      placement:
-        constraints: [ node.role == worker ]
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: wesllenalves/example-app
     ports:
       - "8282:80"
     networks:
       - laravel
-    depends_on:
-      - postgres
-    restart: always
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.role == worker
     volumes:
-      - .:/var/www/html:rw
-      - session-laravel-vol:/var/www/html/storage/framework/sessions
+      - type: volume
+        source: session-laravel-vol
+        target: /var/www/html/storage/framework/sessions
   
   postgres:
     image: postgres:14.4-alpine
-    deploy:
-      replicas: 4
-      placement:
-        constraints: [ node.role == worker ]
-    restart: always
     ports:
-        - "${DB_PORT}:5432"
+      - "5432:5432"
     volumes:
-        - ./postgresql:/var/lib/postgresql/data
+      - type: bind
+        source: ./postgresql
+        target: /var/lib/postgresql/data
     environment:
-        - POSTGRES_DB=${DB_DATABASE}
-        - POSTGRES_USER=${DB_USERNAME}
-        - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=example_app_docker
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     networks:
-        - laravel
-  
+      - laravel
+
 volumes:
   session-laravel-vol:
     driver: local
