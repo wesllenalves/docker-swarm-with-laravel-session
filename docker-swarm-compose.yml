@@ -26,7 +26,6 @@ services:
       replicas: 4
       placement:
         constraints: [ node.role == worker ]
-    container_name: "${CONTAINER_PREFIX}_postgres"
     restart: always
     ports:
         - "${DB_PORT}:5432"
